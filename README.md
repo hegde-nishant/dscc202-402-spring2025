@@ -1,42 +1,155 @@
-# dscc202-402-spring2025
-Course materials for DSCC-202-402
+# Real-Time Tweet Sentiment Analysis Pipeline
 
-## Establishing a GitHub account if you do not have one already
-[Sign up for a new github account](https://docs.github.com/en/github/getting-started-with-github/signing-up-for-a-new-github-account) <br>
+A scalable streaming data pipeline for analyzing tweet sentiment in real-time using Apache Spark Structured Streaming, Delta Lake, and machine learning inference at scale.
 
-## Fork the class repository into your account
-Could you unlock the dsc402 repository into your new account?  Note: this will create a copy of the course repo for you to add and work on within your
-own account.<br>
-Go to https://github.com/lpalum/dscc202-402-spring2025 and hit the fork button while you are logged into your GitHub account.
+## Overview
 
-## Clone your copy of the dsc402 repository to get the class materials on your machine
-git clone https://github.com/your-account-name/dscc202-402-spring2025.git
-note: you may want to clone this repo into a directory on your machine that you organize for code e.g. /home/your-account-name/code/github
+This project implements a complete end-to-end streaming analytics pipeline that processes Twitter data through a medallion architecture (Bronze→Silver→Gold) and performs sentiment classification using a pre-trained transformer model. The system is designed to handle large-scale streaming data with fault tolerance, exactly-once processing, and real-time monitoring.
 
-Note: **/home/[your account name] should be /Users/[your account name] to work with the paths that are defined in Mac OS X.**
+## Architecture
 
-## Access Databricks Workspace through the course home page on Blackboard LMS
-[Login to Blackboard to access Databricks Workspace](https://learn.rochester.edu/)
+```
+Raw Tweets (JSON) → Bronze Layer → Silver Layer → Gold Layer → Analytics
+                      ↓             ↓             ↓
+                   Raw Ingest   Preprocessing   ML Inference
+```
 
+### Data Flow
 
-Here is some helpful information about importing archives into the Databricks Environment: 
-[Getting Started](https://docs.databricks.com/en/workspace/index.html)
+1. **Bronze Layer**: Ingests raw JSON tweet files with schema validation
+2. **Silver Layer**: Extracts mentions, cleans text, and converts timestamps
+3. **Gold Layer**: Applies ML model for sentiment prediction and scoring
+4. **Application Layer**: Aggregates sentiment statistics by mention
 
-Import the DBC archive from the Learning Spark v2 GitHub repository into your account. (this is the code that goes along with the test book)
-[DBC Archive](https://github.com/databricks/LearningSparkV2/blob/master/notebooks/LearningSparkv2.dbc)
+## Features
 
-Import the DBC archives for the class after unzipping dscc202-402-dbc.zip on your machine.
-- asp.dbc   apache spark programming
-- de.dbc    data engineering with delta lake and spark
-- ml.dbc    machine learning on spark
+- **Real-time Processing**: Spark Structured Streaming for continuous data ingestion
+- **ACID Transactions**: Delta Lake for reliable data storage with time travel
+- **ML at Scale**: Distributed sentiment inference using MLflow and Hugging Face models
+- **Fault Tolerance**: Checkpoint-based recovery and exactly-once processing
+- **Performance Monitoring**: Real-time metrics and Spark UI optimization analysis
+- **Scalable Architecture**: Configurable parallelism and resource management
 
-## Running your own local Spark Environment on your Computer [optional]
-[Install docker on your computer](https://docs.docker.com/get-docker/)
+## Technology Stack
 
-Pull the all-spark-notebook image from docker hub: <br>
-<code>https://hub.docker.com/r/lpalum/dsc402</code>
-<br>Launch the docker image to open a Jupyter Lab instance in your local browser:<br>
-<code>docker run -it --rm -p 8888:8888 --name all-spark --volume /home/[your account name]/code/github:/home/jovyan/work lpalum/dsc402 start.sh Jupyter lab</code>
+- **Apache Spark**: Distributed streaming and batch processing
+- **Delta Lake**: ACID storage layer with versioning
+- **MLflow**: Model registry and experiment tracking
+- **Hugging Face Transformers**: Pre-trained sentiment analysis model
+- **Databricks**: Cloud-based execution platform
+- **Python**: Primary development language
 
-This will start a Jupyter lab instance on your machine that you will be able to access at port 8888 in your browser, and it will mount the GitHub repo that you previously
-cloned into the container working directory.
+## Data Schema
+
+### Input Data (Bronze)
+```json
+{
+  "date": "Mon Apr 06 22:19:49 PDT 2009",
+  "user": "username",
+  "text": "tweet content with @mentions",
+  "sentiment": "positive|negative|neutral"
+}
+```
+
+### Output Data (Gold)
+- Original tweet metadata and sentiment
+- ML-predicted sentiment scores (0-100)
+- Predicted sentiment labels (POS/NEG/NEU)
+- Numerical sentiment encoding for analysis
+
+## Getting Started
+
+### Prerequisites
+
+- Databricks workspace with ML runtime
+- Access to MLflow Model Registry
+- Tweet dataset in DBFS (`/FileStore/tables/raw_tweets/`)
+- Hugging Face model registered in MLflow as "HF_TWEET_SENTIMENT"
+
+### Installation
+
+1. Clone this repository to your Databricks workspace
+2. Upload the notebook and includes directory
+3. Ensure the sentiment model is registered in MLflow
+4. Configure the data source path in `includes/includes.ipynb`
+
+### Running the Pipeline
+
+1. Open `Starter Streaming Tweet Sentiment - Spring 2025 Final Project.ipynb`
+2. Run the notebook cells sequentially or use "Run All"
+3. Monitor streaming progress through the built-in monitoring loop
+4. View results in the Delta tables and MLflow experiments
+
+## Configuration
+
+Key configuration variables in `includes/includes.ipynb`:
+
+- `TWEET_SOURCE_PATH`: Location of input tweet files
+- `USER_DIR`: User-specific workspace directory
+- `MODEL_NAME`: MLflow model registry name
+- `HF_MODEL_NAME`: Hugging Face model identifier
+
+## Performance Optimization
+
+The pipeline includes several optimization strategies:
+
+- **Dynamic Partitioning**: Shuffle partitions scaled to cluster size
+- **Delta Optimization**: Automatic small file compaction
+- **Memory Management**: Configurable caching and spill handling
+- **Stream Checkpointing**: Fault-tolerant processing with recovery
+
+## Monitoring and Analytics
+
+### Real-time Metrics
+- Input rows processed per second
+- Processing latency per batch
+- Memory and CPU utilization
+- Stream health and status
+
+### Business Analytics
+- Sentiment distribution by user mentions
+- Top positive/negative mentions
+- Temporal sentiment trends
+- Model accuracy metrics
+
+## Results
+
+The pipeline processes approximately 41,000+ tweet files and provides:
+
+- **Precision**: 82.1% weighted average
+- **Recall**: 55.7% weighted average  
+- **F1-Score**: 66.3% weighted average
+- **Processing Time**: ~70+ minutes for full dataset
+
+## File Structure
+
+```
+├── Starter Streaming Tweet Sentiment - Spring 2025 Final Project.ipynb
+├── includes/
+│   ├── includes.ipynb          # Configuration and constants
+│   └── utilities.ipynb         # Helper functions
+├── LICENSE                     # Apache 2.0 License
+├── README.md                   # This file
+└── CLAUDE.md                   # Development guidance
+```
+
+## Contributing
+
+This project was developed as a final project for DSCC202-402 Data Science at Scale. The implementation demonstrates:
+
+- Spark Structured Streaming best practices
+- Delta Lake medallion architecture
+- MLflow model deployment patterns
+- Performance optimization techniques
+- Real-time monitoring and analytics
+
+## License
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
+
+## Acknowledgments
+
+- Course: DSCC202-402 Data Science at Scale
+- Platform: Databricks Community Edition
+- ML Model: [finiteautomata/bertweet-base-sentiment-analysis](https://huggingface.co/finiteautomata/bertweet-base-sentiment-analysis)
+- Framework: Apache Spark and Delta Lake ecosystem
